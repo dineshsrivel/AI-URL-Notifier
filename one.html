@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI - URL NOTIFIER</title>
+<style>
+/* Theme: Orange/Blue Mixed (matching index.html) */
+:root{--accent1:#f97316;--accent2:#51acd0}
+html,body{height:100%;}
+body{
+  margin:0;font-family:Segoe UI, Arial, sans-serif;
+  background:linear-gradient(135deg, rgba(249,115,22,0.95) 0%, rgba(81,172,208,0.95) 50%, #ffffff 100%);
+  color:#07262a;display:flex;align-items:flex-start;justify-content:center;padding:36px;
+}
+.container{
+  width:100%;max-width:760px;background:linear-gradient(135deg, rgba(249,115,22,0.12), rgba(81,172,208,0.12));
+  padding:28px;border-radius:14px;box-shadow:0 12px 48px rgba(16,24,40,0.06);color:var(--fg,#044);
+}
+h1{margin:0 0 14px 0;color:#062b2a}
+input{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(0,0,0,0.06);margin:10px 0;background:white}
+button{padding:12px 18px;border-radius:10px;border:none;cursor:pointer;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:white;font-weight:700}
+.btn-small{padding:8px 12px;border-radius:8px;border:none;background:white;color:var(--accent2);font-weight:700;cursor:pointer;box-shadow:0 6px 16px rgba(16,24,40,0.08)}
+.btn-small:hover{transform:translateY(-1px);box-shadow:0 10px 26px rgba(16,24,40,0.12)}
+button:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(81,172,208,0.12)}
+.hidden{display:none}
+.bottom-btn{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:white;border:none;border-radius:999px;padding:10px 18px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,0.12);display:none;cursor:pointer}
+.error{color:#8b0000;font-weight:700}
+@media(max-width:680px){body{padding:18px}.container{padding:18px;border-radius:12px}}
+</style>
+</head>
+
+<body>
+
+<!-- ================= TRIAL SECTION ================= -->
+<div class="container" id="dashboardSection">
+  <h1>AI URL Notifier Trial</h1>
+  <input type="text" id="t_url" placeholder="Enter website URL" />
+  <input type="email" id="t_email" placeholder="Enter your email" />
+  <button id="t_get">Get Update</button>
+  <p id="t_msg"></p>
+  <p><button type="button" class="btn-small" id="toAuthLink">Login / Signup</button></p>
+</div>
+
+<!-- ================= AUTH SECTION ================= -->
+<div class="container hidden" id="authSection">
+  <h1 id="formTitle">Sign Up</h1>
+  <div id="nameGroup">
+    <input type="text" id="a_name" placeholder="Enter your name" />
+  </div>
+  <input type="email" id="a_email" placeholder="Enter your email" />
+  <input type="password" id="a_pwd" placeholder="Enter your password" />
+  <div id="confirmGroup">
+    <input type="password" id="a_confirm" placeholder="Confirm password" />
+  </div>
+  <button id="a_action">Register</button>
+  <p>
+    <button type="button" class="btn-small" id="toggleForm">Already have an account? Login</button>
+    <span style="margin:0 8px;color:rgba(0,0,0,0.35)">|</span>
+    <button type="button" class="btn-small" id="toForgot">Forgot password?</button>
+  </p>
+  <p id="a_msg"></p>
+</div>
+
+<!-- ================= FORGOT PASSWORD ================= -->
+<div class="container hidden" id="forgotSection">
+  <h1>Forgot Password</h1>
+  <input type="email" id="f_email" placeholder="Enter your registered email" />
+  <button id="f_send">Send Reset Link</button>
+  <p id="f_msg"></p>
+  <p><button type="button" class="btn-small" id="backToAuth">Back to Login</button></p>
+</div>
+
+<!-- ================= AFTER LOGIN DASHBOARD ================= -->
+<div class="container hidden" id="mainDashSection">
+  <h1>Welcome to AI URL Notifier!</h1>
+  <p>You’re successfully logged in 🎉</p>
+  <button id="mainDashboardBtn">Main Dashboard</button>
+</div>
+
+<!-- Floating Dashboard Shortcut -->
+<button class="bottom-btn" id="bottomMainBtn">⇾</button>
+
+<!-- ================= SCRIPT ================= -->
+<script>
+// =============== HELPERS ===============
+function isValidEmail(email) {
+  return email && email.includes("@") && email.includes(".");
+}
+
+function showMessage(id, msg, isError = false) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.classList.toggle("error", isError);
+}
+
+// =============== STATE ===============
+let isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+let trialUsed = localStorage.getItem("trial_used") === "true";
+
+// =============== TRIAL LOGIC ===============
+const t_url = document.getElementById("t_url");
+const t_email = document.getElementById("t_email");
+const t_get = document.getElementById("t_get");
+const t_msg = document.getElementById("t_msg");
+const toAuthLink = document.getElementById("toAuthLink");
+
+if (trialUsed) {
+  t_url.disabled = true;
+  t_email.disabled = true;
+  t_get.disabled = true;
+  t_get.style.background = "#ccc";
+  t_msg.textContent = "Trial finished. Login or signup for more.";
+}
+
+t_get.onclick = function () {
+  const url = t_url.value.trim();
+  const email = t_email.value.trim();
+  t_msg.textContent = "";
+
+  if (!url || !email) {
+    showMessage("t_msg", "Enter URL and Email", true);
+    return;
+  }
+  if (!isValidEmail(email)) {
+    showMessage("t_msg", "Enter valid mail id", true);
+    return;
+  }
+  t_msg.textContent = "Update sent successfully!";
+  localStorage.setItem("trial_used", "true");
+  t_get.style.background = "#ccc";
+  t_url.disabled = true;
+  t_email.disabled = true;
+  t_get.disabled = true;
+};
+
+// Go to Auth
+toAuthLink.onclick = function () {
+  document.getElementById("dashboardSection").style.display = "none";
+  document.getElementById("authSection").style.display = "block";
+};
+
+// =============== SIGNUP / LOGIN ===============
+const toggleForm = document.getElementById("toggleForm");
+const confirmGroup = document.getElementById("confirmGroup");
+const nameGroup = document.getElementById("nameGroup");
+const formTitle = document.getElementById("formTitle");
+const a_action = document.getElementById("a_action");
+const a_msg = document.getElementById("a_msg");
+let isSignup = true;
+
+toggleForm.onclick = function () {
+  isSignup = !isSignup;
+  if (isSignup) {
+    formTitle.textContent = "Sign Up";
+    confirmGroup.style.display = "block";
+    nameGroup.style.display = "block";
+    a_action.textContent = "Register";
+    toggleForm.textContent = "Already have an account? Login";
+  } else {
+    formTitle.textContent = "Login";
+    confirmGroup.style.display = "none";
+    nameGroup.style.display = "none";
+    a_action.textContent = "Login";
+    toggleForm.textContent = "Don't have an account? Sign up";
+  }
+  a_msg.textContent = "";
+};
+
+// Login/Register
+a_action.onclick = function () {
+  const email = document.getElementById("a_email").value.trim();
+  const pwd = document.getElementById("a_pwd").value.trim();
+  const confirm = document.getElementById("a_confirm").value.trim();
+  const name = document.getElementById("a_name").value.trim();
+
+  if (!email || !pwd) {
+    showMessage("a_msg", "Please fill all fields", true);
+    return;
+  }
+  if (!isValidEmail(email)) {
+    showMessage("a_msg", "Invalid email format", true);
+    return;
+  }
+
+  if (isSignup) {
+    if (!name || !confirm) {
+      showMessage("a_msg", "All fields required", true);
+      return;
+    }
+    if (pwd !== confirm) {
+      showMessage("a_msg", "Passwords do not match", true);
+      return;
+    }
+    localStorage.setItem("user_email", email);
+    localStorage.setItem("user_pwd", pwd);
+    localStorage.setItem("user_name", name);
+    showMessage("a_msg", "Registered successfully! Please login.");
+    formTitle.textContent = "Login";
+    confirmGroup.style.display = "none";
+    nameGroup.style.display = "none";
+    a_action.textContent = "Login";
+    toggleForm.textContent = "Don't have an account? Sign up";
+    isSignup = false;
+  } else {
+    const storedEmail = localStorage.getItem("user_email");
+    const storedPwd = localStorage.getItem("user_pwd");
+    if (email === storedEmail && pwd === storedPwd) {
+      showMessage("a_msg", "Login successful!");
+      localStorage.setItem("isLoggedIn", "true");
+      isLoggedIn = true;
+      setTimeout(() => {
+        document.getElementById("authSection").style.display = "none";
+        document.getElementById("mainDashSection").style.display = "block";
+        document.getElementById("bottomMainBtn").style.display = "inline-block";
+      }, 1000);
+    } else {
+      showMessage("a_msg", "Invalid credentials", true);
+    }
+  }
+};
+
+// =============== FORGOT PASSWORD ===============
+document.getElementById("toForgot").onclick = function () {
+  document.getElementById("authSection").style.display = "none";
+  document.getElementById("forgotSection").style.display = "block";
+};
+
+document.getElementById("backToAuth").onclick = function () {
+  document.getElementById("forgotSection").style.display = "none";
+  document.getElementById("authSection").style.display = "block";
+};
+
+document.getElementById("f_send").onclick = function () {
+  const email = document.getElementById("f_email").value.trim();
+  if (!isValidEmail(email)) {
+    showMessage("f_msg", "Enter valid email", true);
+    return;
+  }
+  const storedEmail = localStorage.getItem("user_email");
+  if (email === storedEmail) {
+    showMessage("f_msg", "Password reset link sent (mock).");
+  } else {
+    showMessage("f_msg", "Email not registered", true);
+  }
+};
+
+// =============== MAIN DASHBOARD BUTTONS ===============
+document.getElementById("mainDashboardBtn").onclick = function () {
+  alert("Navigating to main dashboard...");
+  window.location.href = "maindash.html";
+};
+
+document.getElementById("bottomMainBtn").onclick = function () {
+  window.location.href = "maindash.html";
+};
+</script>
+</body>
+</html>
